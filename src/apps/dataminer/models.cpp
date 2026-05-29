@@ -288,7 +288,7 @@ static ModelStats analyzeModels(const std::filesystem::path &gameDir, GameID gam
         }
         try {
             auto mdlData = resource.readData();
-            auto mdxLocation = installation.resource(ResourceId(resource.id().resRef(), ResType::Mdx), chitinOnlyOrder());
+            auto mdxLocation = installation.resource(ResourceId(resource.id().resRef, ResType::Mdx), chitinOnlyOrder());
             if (!mdxLocation) {
                 continue;
             }
