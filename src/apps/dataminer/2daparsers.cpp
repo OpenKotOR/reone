@@ -229,17 +229,17 @@ void generate2DAParsers(const std::filesystem::path &k1dir,
     if (k1KeyPath) {
         Installation k1Installation(GameID::KotOR, k1dir);
         k1Installation.loadChitin();
-        forEachResource(k1Installation.chitinResources(), ResType::TwoDA, [&](const FileResource &resource) {
-            auto data = resource.readData();
+        forEachResource(k1Installation.chitinResources(), ResType::TwoDA, [&](const FileResource &fileResource) {
+            auto data = fileResource.readData();
             MemoryInputStream stream {data};
             TwoDAReader reader {stream};
             try {
                 reader.load();
             } catch (const std::exception &ex) {
-                std::cerr << "Error loading 2DA: " << resource.id().resRef.value() << ": " << ex.what() << std::endl;
+                std::cerr << "Error loading 2DA: " << fileResource.id().resRef.value() << ": " << ex.what() << std::endl;
                 return;
             }
-            twoDAs.push_back({resource.id().resRef(), reader.twoDA()});
+            twoDAs.push_back({fileResource.id().resRef, reader.twoDA()});
         });
     }
 
@@ -247,17 +247,17 @@ void generate2DAParsers(const std::filesystem::path &k1dir,
     if (k2KeyPath) {
         Installation k2Installation(GameID::TSL, k2dir);
         k2Installation.loadChitin();
-        forEachResource(k2Installation.chitinResources(), ResType::TwoDA, [&](const FileResource &resource) {
-            auto data = resource.readData();
+        forEachResource(k2Installation.chitinResources(), ResType::TwoDA, [&](const FileResource &fileResource) {
+            auto data = fileResource.readData();
             MemoryInputStream stream {data};
             TwoDAReader reader {stream};
             try {
                 reader.load();
             } catch (const std::exception &ex) {
-                std::cerr << "Error loading 2DA: " << resource.id().resRef.value() << ": " << ex.what() << std::endl;
+                std::cerr << "Error loading 2DA: " << fileResource.id().resRef.value() << ": " << ex.what() << std::endl;
                 return;
             }
-            twoDAs.push_back({resource.id().resRef(), reader.twoDA()});
+            twoDAs.push_back({fileResource.id().resRef, reader.twoDA()});
         });
     }
 
