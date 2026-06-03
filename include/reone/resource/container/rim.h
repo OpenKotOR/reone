@@ -17,8 +17,6 @@
 
 #pragma once
 
-#include "reone/system/stream/fileinput.h"
-
 #include "../container.h"
 #include "utils.h"
 

@@ -18,7 +18,6 @@
 #include "reone/resource/container/rim.h"
 
 #include "reone/resource/format/rimreader.h"
-#include "reone/system/stream/fileinput.h"
 
 namespace reone {
 

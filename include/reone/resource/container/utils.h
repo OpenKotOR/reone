@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "reone/system/stream/fileinput.h"
+#include "reone/system/stream/gameinput.h"
 #include "reone/system/stream/memoryinput.h"
 
 namespace reone {
@@ -27,7 +27,7 @@ namespace resource {
 class Storage {
 public:
     Storage(std::filesystem::path path) :
-        _path(path), _file(std::make_unique<FileInputStream>(_path)) {}
+        _path(path), _file(openGameInputStream(_path)) {}
     Storage(ByteBuffer buffer) :
         _buffer(buffer), _mem(std::make_unique<MemoryInputStream>(_buffer)) {}
 
@@ -41,7 +41,7 @@ public:
 
 private:
     std::filesystem::path _path;
-    std::unique_ptr<FileInputStream> _file;
+    std::unique_ptr<IInputStream> _file;
     ByteBuffer _buffer;
     std::unique_ptr<MemoryInputStream> _mem;
 };

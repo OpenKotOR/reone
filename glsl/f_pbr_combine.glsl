@@ -134,7 +134,7 @@ void main() {
                 }
                 float attenuation = lightAttenuationQuadratic(uLights[i], lightDist);
                 vec3 radiance = uLights[i].multiplier * attenuation * gammaToLinear(uLights[i].color.rgb);
-                if (uLights[i].ambientOnly) {
+                if (uLights[i].ambientOnly > 0.0) {
                     irradiance += radiance;
                 } else {
                     vec3 L = normalize(fragToLight);
