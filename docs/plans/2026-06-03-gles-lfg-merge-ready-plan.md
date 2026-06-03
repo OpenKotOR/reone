@@ -5,7 +5,11 @@
 **Branch:** `glad-gles`  
 **PR:** [modawan/reone#163](https://github.com/modawan/reone/pull/163) · upstream [OpenKotOR/reone#7](https://github.com/OpenKotOR/reone/pull/7)
 
-## Pass 3 (2026-06-03)
+## Pass 4 (2026-06-04)
+
+- Disabled wasm-ci `cancel-in-progress` to stop mid-build aborts on PR churn
+- Added shallow checkout on wasm workflow
+- GLES smokes re-validated on HEAD (Malak mean ~920)
 
 - Re-validated headless + menu smokes on `ffd5a643` (Malak mean 929)
 - Opened upstream PR OpenKotOR/reone#7 (`glad-gles` → `master`)

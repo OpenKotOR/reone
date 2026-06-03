@@ -29,8 +29,9 @@ permissions:
   actions: write
 
 concurrency:
+  # Self-hosted wasm builds run ~30–90m; do not cancel mid-compile on PR sync churn.
   group: wasm-ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   wasm-ci:
@@ -39,6 +40,8 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Install build deps (Fedora host)
         run: |
