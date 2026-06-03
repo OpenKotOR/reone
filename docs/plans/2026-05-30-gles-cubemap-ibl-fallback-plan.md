@@ -61,16 +61,20 @@ Geometry shaders remain replaced by multi-pass shadow rendering (`uShadowLayer` 
 - OES cube map array fast path retained when `GLAD_GL_OES_texture_cube_map_array` loads
 - Shadow geometry-shader workaround (`uShadowLayer` multi-pass)
 - Native GLES build verified (`build-gles/` → `engine` links)
+- Main menu + cursor rendering fixed on Mesa (BGR/BGRA upload + GLSL compile fixes)
 - PR opened: https://github.com/modawan/reone/pull/163
+- GLES CI workflow added (`.github/workflows/build-gles.yml`)
 
 ### Partial / uncertain
 
-- In-game visual check (skybox/reflections non-black on Mesa GLES without OES) not run in this environment
+- In-game IBL visual check (skybox/reflections on fallback path in a module) not run yet
 - OES 16-layer fast path not validated on hardware with the extension
+- Fork PR workflow may require manual approval on modawan before checks run
 - WebGL/WASM combine-shader compile not exercised
 
 ### Recommended next steps
 
-1. Run `build-gles/debug/bin/engine` against a local KOTOR install; confirm IBL on fallback path
-2. Add CI workflow for `REONE_GRAPHICS_GLES=ON` build (modawan has no checks on `glad-gles` today)
-3. WASM vertical slice when `build-web/` profile is ready
+1. Confirm `Build GLES engine` CI is green on PR #163
+2. Run `./tools/gles/smoke_menu_validate.sh` after CI passes (already validated locally)
+3. Optional: `./tools/gles/smoke_warp_validate.sh` for in-module IBL spot-check
+4. WASM vertical slice when `build-web/` profile is ready

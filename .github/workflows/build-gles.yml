@@ -17,18 +17,19 @@ concurrency:
 
 jobs:
   gles-linux:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
+    container:
+      image: "ubuntu:25.10"
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            build-essential cmake ninja-build pkg-config ccache \
-            libboost-program-options-dev libboost-exception-dev libboost-json-dev \
-            libopenal-dev libsdl3-dev libmad0-dev \
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build pkg-config \
+            libboost-all-dev libsdl3-dev libopenal-dev libmad0-dev \
             libavcodec-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev \
             libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev
 
