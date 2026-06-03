@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Smoke: headless Xvfb -> engine -> warp -> module -> screenshot (Mesa GLES IBL check).
+# Smoke: headless Xvfb -> engine -> console warp -> module -> screenshot (Mesa GLES IBL check).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -28,6 +28,8 @@ if [[ "${REONE_SKIP_BUILD:-0}" != "1" ]]; then
   cmake --build "$BUILD_DIR" --target engine launcher shaderpack -j"$(nproc)"
 fi
 
+printf 'warp %s\n' "$MODULE" >"$BINDIR/smoke_warp.cmd"
+
 cat >"$BINDIR/reone.cfg" <<EOF
 game=$GAME
 dev=1
@@ -52,6 +54,7 @@ soundvol=0
 movievol=0
 logsev=1
 logch=9
+commands-file=smoke_warp.cmd
 EOF
 
 cd "$BINDIR"
@@ -67,93 +70,122 @@ if [[ ! -f "$BINDIR/shaderpack.erf" ]]; then
 fi
 "$BINDIR/shaderpack" "$ROOT/glsl" "$BINDIR" >/dev/null
 
-pkill -f "$BINDIR/engine" 2>/dev/null || true
-pkill -f "$BINDIR/launcher" 2>/dev/null || true
-sleep 1
-
-find_engine_pid() {
+stop_bindir_engines() {
   local pid cwd
   for pid in $(pgrep -x engine 2>/dev/null || true); do
     cwd=$(readlink -f "/proc/$pid/cwd" 2>/dev/null || true)
     if [[ "$cwd" == "$(readlink -f "$BINDIR")" ]]; then
-      echo "$pid"
-      return 0
+      kill "$pid" 2>/dev/null || true
     fi
+  done
+  pkill -f "$BINDIR/launcher" 2>/dev/null || true
+  sleep 1
+}
+stop_bindir_engines
+
+engine_alive() {
+  local pid="$1"
+  [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null
+}
+
+find_engine_window() {
+  local pid="$1"
+  local wid=""
+  wid=$(xdotool search --pid "$pid" 2>/dev/null | head -1 || true)
+  if [[ -n "$wid" ]]; then
+    echo "$wid"
+    return 0
+  fi
+  wid=$(xdotool search --class engine 2>/dev/null | head -1 || true)
+  if [[ -n "$wid" ]]; then
+    echo "$wid"
+    return 0
+  fi
+  for wid in $(xdotool search --class SDL_app 2>/dev/null); do
+    echo "$wid"
+    return 0
   done
   return 1
 }
 
-GDK_BACKEND=x11 SDL_VIDEODRIVER=x11 ./launcher >/dev/null 2>&1 &
-LAUNCHER_PID=$!
+echo "Launching engine (console warp to $MODULE)..."
+GDK_BACKEND=x11 SDL_VIDEODRIVER=x11 ./engine >>engine.log 2>&1 &
+ENGINE_PID=$!
 cleanup() {
-  kill "$LAUNCHER_PID" 2>/dev/null || true
-  pkill -f "$BINDIR/engine" 2>/dev/null || true
+  stop_bindir_engines
 }
 trap cleanup EXIT
 
-echo "Waiting for launcher window..."
-LAUNCH_WIN=""
 for _ in $(seq 1 30); do
-  LAUNCH_WIN=$(xdotool search --name "^reone$" 2>/dev/null | head -1 || true)
-  [[ -n "$LAUNCH_WIN" ]] && break
+  if grep -q "Engine failure:" engine.log 2>/dev/null; then
+    echo "Engine failed during startup" >&2
+    tail -20 engine.log 2>/dev/null || true
+    exit 1
+  fi
+  if grep -q "reone smoke signal: engine startup" engine.log 2>/dev/null; then
+    break
+  fi
+  if ! engine_alive "$ENGINE_PID"; then
+    echo "Engine exited before startup completed" >&2
+    tail -20 engine.log 2>/dev/null || true
+    exit 1
+  fi
   sleep 1
 done
-if [[ -z "$LAUNCH_WIN" ]]; then
-  echo "Launcher window not found" >&2
-  exit 1
-fi
-
-headless_x11_activate_window "$LAUNCH_WIN"
-sleep 1
-eval "$(xdotool getwindowgeometry --shell "$LAUNCH_WIN")"
-LAUNCH_CLICK_X=$((WIDTH / 2))
-LAUNCH_CLICK_Y=$((HEIGHT - 75))
-xdotool mousemove --window "$LAUNCH_WIN" "$LAUNCH_CLICK_X" "$LAUNCH_CLICK_Y" click 1
-echo "Clicked Launch at ${LAUNCH_CLICK_X},${LAUNCH_CLICK_Y} (frame ${WIDTH}x${HEIGHT})"
-
-ENGINE_PID=""
-for _ in $(seq 1 120); do
-  ENGINE_PID=$(find_engine_pid || true)
-  [[ -n "$ENGINE_PID" ]] && break
-  sleep 1
-done
-if [[ -z "$ENGINE_PID" ]]; then
-  echo "Engine did not start" >&2
+if ! grep -q "reone smoke signal: engine startup" engine.log 2>/dev/null; then
+  echo "Engine did not log startup" >&2
+  tail -20 engine.log 2>/dev/null || true
   exit 1
 fi
 echo "Engine pid $ENGINE_PID"
 
-sleep 8
 ENGINE_WIN=""
 for _ in $(seq 1 60); do
-  for wid in $(xdotool search --class SDL_app 2>/dev/null); do
-    if [[ "$wid" != "$LAUNCH_WIN" ]]; then
-      ENGINE_WIN=$wid
-      break 2
-    fi
-  done
+  if ! engine_alive "$ENGINE_PID"; then
+    echo "Engine exited while searching for window" >&2
+    tail -50 engine.log 2>/dev/null || true
+    exit 1
+  fi
+  ENGINE_WIN=$(find_engine_window "$ENGINE_PID" || true)
+  [[ -n "$ENGINE_WIN" ]] && break
   sleep 1
 done
 if [[ -z "$ENGINE_WIN" ]]; then
-  echo "Engine SDL window not found" >&2
+  echo "Engine window not found" >&2
   exit 1
 fi
-echo "Engine window $ENGINE_WIN ($(xdotool getwindowname "$ENGINE_WIN" 2>/dev/null || echo SDL))"
+echo "Engine window $ENGINE_WIN"
 
-headless_x11_activate_window "$ENGINE_WIN"
-sleep 2
+# Engine skips frame updates when unfocused; focus the window on Xvfb for rendering.
+xdotool windowfocus --sync "$ENGINE_WIN" 2>/dev/null || true
+xdotool windowraise "$ENGINE_WIN" 2>/dev/null || true
 
-# Developer warp button on K1 main menu (1024x768).
-xdotool mousemove --window "$ENGINE_WIN" 130 545 click 1
-sleep 2
+echo "Waiting for module $MODULE..."
+for _ in $(seq 1 120); do
+  if ! engine_alive "$ENGINE_PID"; then
+    echo "Engine exited during module load" >&2
+    tail -50 engine.log 2>/dev/null || true
+    exit 1
+  fi
+  if grep -qi "Module '${MODULE}' loaded successfully" engine.log 2>/dev/null; then
+    break
+  fi
+  sleep 1
+done
 
-# Module list — click list area then type filter and confirm.
-xdotool mousemove --window "$ENGINE_WIN" 180 280 click 1
-sleep 0.5
-xdotool type --window "$ENGINE_WIN" --delay 20 "$MODULE"
-sleep 0.5
-xdotool key --window "$ENGINE_WIN" Return
-sleep 35
+if ! grep -qi "Loading module.*${MODULE}" engine.log 2>/dev/null; then
+  echo "ERROR: module load not detected in engine.log" >&2
+  tail -30 engine.log 2>/dev/null || true
+  exit 1
+fi
+
+sleep 15
+
+if ! engine_alive "$ENGINE_PID"; then
+  echo "Engine exited before screenshot" >&2
+  tail -50 engine.log 2>/dev/null || true
+  exit 1
+fi
 
 TAG="fallback"
 if grep -q "Cube map array supported: yes" engine.log 2>/dev/null; then
@@ -164,4 +196,5 @@ SHOT="$OUTDIR/gles-${TAG}-${MODULE}-$(date +%Y%m%d-%H%M%S).png"
 import -window "$ENGINE_WIN" "$SHOT"
 echo "Screenshot: $SHOT"
 grep "Cube map array supported" engine.log || true
-grep -i "Loading module" engine.log | tail -5 || true
+grep -i "Loading module" engine.log | tail -3 || true
+grep -i "loaded successfully" engine.log | tail -1 || true
