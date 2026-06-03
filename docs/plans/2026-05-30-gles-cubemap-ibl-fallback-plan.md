@@ -64,17 +64,19 @@ Geometry shaders remain replaced by multi-pass shadow rendering (`uShadowLayer` 
 - Main menu + cursor rendering fixed on Mesa (BGR/BGRA upload + GLSL compile fixes)
 - Main menu 3D view with `pbr=1`: orthographic GUI scenes use retro forward renderer (PBR deferred combine fails on ortho depth path)
 - Headless smoke harness: `smoke_menu_validate.sh`, `smoke_warp_validate.sh` (console `warp`), `smoke_headless_selftest.sh` in CI
+- OpenKotOR CI green on `0f94b03e`: [Build GLES engine #26906598931](https://github.com/OpenKotOR/reone/actions/runs/26906598931)
 - PR opened: https://github.com/modawan/reone/pull/163
 
 ### Partial / uncertain
 
 - In-module IBL screenshot captured (`gles-fallback-danm14aa-*.png`) but not auto-scored for skybox/reflection quality
 - OES 16-layer fast path not validated on hardware with the extension
-- Fork PR workflow requires manual approval before checks run (`action_required`)
+- modawan fork PR workflows still `action_required` (approval only; OpenKotOR push CI is green)
+- Merge with `master` has conflicts in GLES/graphics paths (50 commits behind)
 - WebGL/WASM combine-shader compile not exercised
 
 ### Recommended next steps
 
-1. Approve pending GitHub Actions runs on OpenKotOR `glad-gles` PR (fork approval gate)
+1. Merge/rebase `master` into `glad-gles` (resolve GLES conflicts) before upstream merge
 2. User GPU check: `REONE_USE_REAL_DISPLAY=1 tools/gles/smoke_menu_validate.sh` for Malak visibility
 3. WASM vertical slice when `build-web/` profile is ready
