@@ -68,6 +68,11 @@ void Context::init() {
     _cubeMapArraySupported = false;
 #endif
     _options.cubeMapArraySupported = _cubeMapArraySupported;
+    info(str(boost::format("Cube map array supported: %s") % (_cubeMapArraySupported ? "yes" : "no")), LogChannel::Graphics);
+
+    int maxTexUnits = 0;
+    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTexUnits);
+    info(str(boost::format("Max combined texture image units: %d") % maxTexUnits), LogChannel::Graphics);
 
     int maxBuffers;
     glGetIntegerv(GL_MAX_DRAW_BUFFERS, &maxBuffers);

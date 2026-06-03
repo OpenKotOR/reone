@@ -95,13 +95,13 @@ void main() {
     bool shadowsEnabled;
     bool fogEnabled;
     unpackGeometryFeatures(lightmapSample.a, envmapped, shadowsEnabled, fogEnabled);
-    environment *= int(envmapped);
+    environment *= envmapped ? 1.0 : 0.0;
 
     float shadow = getShadow(eyePos, fragPosWorld, normal, sShadowMap, sShadowMapCube);
     shadow = max(shadow, 1.0 - rgbToLuma(lightmapSample.rgb));
-    shadow *= int(shadowsEnabled);
+    shadow *= shadowsEnabled ? 1.0 : 0.0;
 
-    float fog = int(fogEnabled) * getFog(fragPosWorld);
+    float fog = (fogEnabled ? 1.0 : 0.0) * getFog(fragPosWorld);
 
     vec3 ambientD = vec3(0.0);
     vec3 ambientS = vec3(0.0);
@@ -115,7 +115,7 @@ void main() {
         vec3 F0 = mix(vec3(0.04), albedo, metallic);
 
         vec3 irradiance = gammaToLinear(uWorldAmbientColor.rgb);
-        irradiance += int(envmapped) * gammaToLinear(irradianceSample);
+        irradiance += envmapped ? gammaToLinear(irradianceSample) : vec3(0.0);
 
         // lights
         {
@@ -147,7 +147,7 @@ void main() {
                     float D = PBR_distributionGGX(NdotH * NdotH, a2);
                     float G = PBR_geometrySmith(NdotL, NdotV, k);
                     vec3 F = PBR_fresnelSchlick(VdotH, F0);
-                    vec3 spec = (D * G * F) / max(1e-4, 4.0 * NdotL * NdotV);
+                    vec3 spec = (D * G * F) / max(0.0001, 4.0 * NdotL * NdotV);
 
                     vec3 kD = vec3(1.0) - F;
                     kD *= 1.0 - metallic;
@@ -170,7 +170,7 @@ void main() {
         ambientS = environment * (F * brdfSample.x + brdfSample.y);
     }
 
-    vec3 selfillumstep = step(1e-4, selfIllumSample.rgb);
+    vec3 selfillumstep = step(0.0001, selfIllumSample.rgb);
     float selfillumed = max(selfillumstep.x, max(selfillumstep.y, selfillumstep.z));
 
     vec3 color = min(vec3(1.0), ao * ambientD + (1.0 - shadow) * (max(vec3(0.0), directD) + emission)) * albedo;

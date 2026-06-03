@@ -61,9 +61,9 @@ static uint32_t getPixelFormatGL(PixelFormat format) {
     //     return GL_BGRA;
 
     case PixelFormat::BGR8:
-        return GL_RGB8;
+        return GL_RGB;
     case PixelFormat::BGRA8:
-        return GL_RGBA8;
+        return GL_RGBA;
 
     case PixelFormat::Depth24:
     case PixelFormat::Depth32F:
@@ -227,13 +227,32 @@ void Texture::refresh() {
     }
 }
 
+static std::shared_ptr<ByteBuffer> bgrPixelsAsRgb(PixelFormat format, const ByteBuffer &pixels) {
+    if (format != PixelFormat::BGR8 && format != PixelFormat::BGRA8) {
+        return nullptr;
+    }
+    auto rgb = std::make_shared<ByteBuffer>(pixels);
+    const size_t stride = format == PixelFormat::BGRA8 ? 4 : 3;
+    for (size_t i = 0; i + stride - 1 < rgb->size(); i += stride) {
+        std::swap((*rgb)[i], (*rgb)[i + 2]);
+    }
+    return rgb;
+}
+
 void Texture::refresh2D() {
     const void *pixelsData;
     size_t pixelsSize;
+    std::shared_ptr<ByteBuffer> rgbScratch;
     if (!_layers.empty() && _layers.front().pixels) {
         auto &pixels = _layers.front().pixels;
-        pixelsData = pixels->data();
-        pixelsSize = pixels->size();
+        rgbScratch = bgrPixelsAsRgb(_pixelFormat, *pixels);
+        if (rgbScratch) {
+            pixelsData = rgbScratch->data();
+            pixelsSize = rgbScratch->size();
+        } else {
+            pixelsData = pixels->data();
+            pixelsSize = pixels->size();
+        }
     } else {
         pixelsData = nullptr;
         pixelsSize = 0;
