@@ -63,19 +63,18 @@ Geometry shaders remain replaced by multi-pass shadow rendering (`uShadowLayer` 
 - Native GLES build verified (`build-gles/` → `engine` links)
 - Main menu + cursor rendering fixed on Mesa (BGR/BGRA upload + GLSL compile fixes)
 - Main menu 3D view with `pbr=1`: orthographic GUI scenes use retro forward renderer (PBR deferred combine fails on ortho depth path)
+- Headless smoke harness: `smoke_menu_validate.sh`, `smoke_warp_validate.sh` (console `warp`), `smoke_headless_selftest.sh` in CI
 - PR opened: https://github.com/modawan/reone/pull/163
-- GLES CI workflow added (`.github/workflows/build-gles.yml`)
 
 ### Partial / uncertain
 
-- In-game IBL visual check (skybox/reflections on fallback path in a module) not run yet
+- In-module IBL screenshot captured (`gles-fallback-danm14aa-*.png`) but not auto-scored for skybox/reflection quality
 - OES 16-layer fast path not validated on hardware with the extension
-- Fork PR workflow may require manual approval on modawan before checks run
+- Fork PR workflow requires manual approval before checks run (`action_required`)
 - WebGL/WASM combine-shader compile not exercised
 
 ### Recommended next steps
 
-1. User confirm main menu screenshot (`tools/gles/evidence/menu-pbr-fixed-*.png`) at 1024×768
-2. Confirm `Build GLES engine` CI is green on PR #163
-3. After menu sign-off: `./tools/gles/smoke_warp_validate.sh` for in-module IBL spot-check
-4. WASM vertical slice when `build-web/` profile is ready
+1. Approve pending GitHub Actions runs on OpenKotOR `glad-gles` PR (fork approval gate)
+2. User GPU check: `REONE_USE_REAL_DISPLAY=1 tools/gles/smoke_menu_validate.sh` for Malak visibility
+3. WASM vertical slice when `build-web/` profile is ready

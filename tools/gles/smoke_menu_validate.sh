@@ -67,21 +67,19 @@ if [[ ! -f "$BINDIR/shaderpack.erf" ]]; then
 fi
 "$BINDIR/shaderpack" "$ROOT/glsl" "$BINDIR" >/dev/null
 
-pkill -f "$BINDIR/engine" 2>/dev/null || true
-pkill -f "$BINDIR/launcher" 2>/dev/null || true
-sleep 1
-
-find_engine_pid() {
+stop_bindir_engines() {
   local pid cwd
   for pid in $(pgrep -x engine 2>/dev/null || true); do
     cwd=$(readlink -f "/proc/$pid/cwd" 2>/dev/null || true)
     if [[ "$cwd" == "$(readlink -f "$BINDIR")" ]]; then
-      echo "$pid"
-      return 0
+      kill "$pid" 2>/dev/null || true
     fi
   done
-  return 1
+  pkill -f "$BINDIR/launcher" 2>/dev/null || true
+  sleep 1
 }
+stop_bindir_engines
+rm -f smoke_warp.cmd
 
 engine_alive() {
   local pid="$1"
@@ -109,25 +107,32 @@ find_engine_window() {
 }
 
 echo "Launching engine directly (dev main menu)..."
-GDK_BACKEND=x11 SDL_VIDEODRIVER=x11 ./engine &
+GDK_BACKEND=x11 SDL_VIDEODRIVER=x11 ./engine >>engine.log 2>&1 &
 ENGINE_PID=$!
-sleep 1
 cleanup() {
-  kill "$ENGINE_PID" 2>/dev/null || true
-  pkill -f "$BINDIR/engine" 2>/dev/null || true
+  stop_bindir_engines
 }
 trap cleanup EXIT
 
-if ! engine_alive "$ENGINE_PID"; then
-  ENGINE_PID=""
-  for _ in $(seq 1 30); do
-    ENGINE_PID=$(find_engine_pid || true)
-    [[ -n "$ENGINE_PID" ]] && break
-    sleep 1
-  done
-fi
-if [[ -z "$ENGINE_PID" ]]; then
-  echo "Engine did not start" >&2
+for _ in $(seq 1 30); do
+  if grep -q "Engine failure:" engine.log 2>/dev/null; then
+    echo "Engine failed during startup" >&2
+    tail -20 engine.log 2>/dev/null || true
+    exit 1
+  fi
+  if grep -q "reone smoke signal: engine startup" engine.log 2>/dev/null; then
+    break
+  fi
+  if ! engine_alive "$ENGINE_PID"; then
+    echo "Engine exited before startup completed" >&2
+    tail -20 engine.log 2>/dev/null || true
+    exit 1
+  fi
+  sleep 1
+done
+if ! grep -q "reone smoke signal: engine startup" engine.log 2>/dev/null; then
+  echo "Engine did not log startup" >&2
+  tail -20 engine.log 2>/dev/null || true
   exit 1
 fi
 echo "Engine pid $ENGINE_PID"
@@ -159,6 +164,8 @@ if [[ -z "$ENGINE_WIN" ]]; then
 fi
 echo "Engine window $ENGINE_WIN"
 
+xdotool windowfocus --sync "$ENGINE_WIN" 2>/dev/null || true
+xdotool windowraise "$ENGINE_WIN" 2>/dev/null || true
 headless_x11_activate_window "$ENGINE_WIN"
 sleep 2
 
