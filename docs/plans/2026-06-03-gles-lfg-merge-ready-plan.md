@@ -5,6 +5,11 @@
 **Branch:** `glad-gles`  
 **PR:** [modawan/reone#163](https://github.com/modawan/reone/pull/163) · upstream [OpenKotOR/reone#7](https://github.com/OpenKotOR/reone/pull/7)
 
+## Pass 6 (2026-06-04)
+
+- modawan/reone#163 merge-ready; blocked on modawan write permissions (comment posted)
+- Smokes re-validated (Malak mean ~963)
+
 ## Pass 5 (2026-06-04)
 
 - Squash-merged [OpenKotOR/reone#7](https://github.com/OpenKotOR/reone/pull/7) → `master` at `20e32664`
