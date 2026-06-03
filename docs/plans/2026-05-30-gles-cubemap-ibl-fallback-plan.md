@@ -64,7 +64,7 @@ Geometry shaders remain replaced by multi-pass shadow rendering (`uShadowLayer` 
 - Main menu + cursor rendering fixed on Mesa (BGR/BGRA upload + GLSL compile fixes)
 - Main menu 3D view with `pbr=1`: orthographic GUI scenes use retro forward renderer (PBR deferred combine fails on ortho depth path)
 - Headless smoke harness: `smoke_menu_validate.sh`, `smoke_warp_validate.sh` (console `warp`), `smoke_headless_selftest.sh` in CI
-- OpenKotOR CI green on `5f3852f2`: [Build GLES engine #26909705308](https://github.com/OpenKotOR/reone/actions/runs/26909705308)
+- OpenKotOR CI green on `74aa7be6`: [Build GLES engine #26910814411](https://github.com/OpenKotOR/reone/actions/runs/26910814411)
 - **Merged `master`** into `glad-gles` (`b6381396`); post-merge GLES shader + audio null-guard fixes
 - `soundSearchOrder()` includes `StreamMusic` (+ Voice) so main-menu theme (`mus_theme_cult.wav`) resolves again after Installation port
 - Menu smoke asserts no `Failed to load audio clip 'mus_theme…'` in `engine.log`
@@ -75,11 +75,11 @@ Geometry shaders remain replaced by multi-pass shadow rendering (`uShadowLayer` 
 - In-module IBL screenshot captured (`gles-fallback-danm14aa-*.png`) but not auto-scored for skybox/reflection quality
 - OES 16-layer fast path not validated on hardware with the extension
 - modawan fork PR workflows still `action_required` (approval only; OpenKotOR push CI is green)
-- Real-GPU Malak visibility not verified in this pass (headless Mesa only)
+- Real-GPU menu smoke on `DISPLAY=:0` passes log/screenshot gates, but Malak body remains a near-black silhouette (3D view region mean ≈568/65535); UI/cursor/logo OK
 - WebGL/WASM combine-shader compile not exercised
 
 ### Recommended next steps
 
 1. Merge [modawan/reone#163](https://github.com/modawan/reone/pull/163) (OpenKotOR CI green; fork checks optional)
-2. Optional GPU: `REONE_USE_REAL_DISPLAY=1 tools/gles/smoke_menu_validate.sh`
+2. Follow-up slice: main-menu Malak retro lighting (GUI ortho scene still too dark on real GPU)
 3. WASM vertical slice when `build-web/` profile is ready
