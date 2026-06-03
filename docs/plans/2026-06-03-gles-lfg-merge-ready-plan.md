@@ -1,7 +1,7 @@
 # GLES glad-gles LFG Merge-Ready Completion Plan
 
 **Date:** 2026-06-03  
-**Status:** active  
+**Status:** completed  
 **Branch:** `glad-gles`  
 **PR:** [modawan/reone#163](https://github.com/modawan/reone/pull/163)
 
