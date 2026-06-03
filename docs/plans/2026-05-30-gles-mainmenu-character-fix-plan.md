@@ -1,6 +1,7 @@
 # GLES Main Menu Character Fix Plan
 
-**Date:** 2026-05-30  
+**Date:** 2026-06-03  
+**Status:** completed  
 **Branch:** `glad-gles`  
 **Problem:** On launch, the main menu 3D preview (Malak) renders as a black silhouette in both retro (`pbr=0`) and PBR (`pbr=1`) modes on GLES.
 
