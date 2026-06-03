@@ -5,6 +5,11 @@
 **Branch:** `glad-gles`  
 **PR:** [modawan/reone#163](https://github.com/modawan/reone/pull/163) · upstream [OpenKotOR/reone#7](https://github.com/OpenKotOR/reone/pull/7)
 
+## Pass 5 (2026-06-04)
+
+- Squash-merged [OpenKotOR/reone#7](https://github.com/OpenKotOR/reone/pull/7) → `master` at `20e32664`
+- GLES smokes re-validated (Malak mean ~958)
+
 ## Pass 4 (2026-06-04)
 
 - Moved wasm-ci to ubuntu-latest (self-hosted checkout auth broken); wasm green in 6m
