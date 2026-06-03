@@ -1,11 +1,21 @@
 #!/usr/bin/env bash
-# Smoke: launcher -> engine main menu only (no warp). Captures screenshot + log checks.
+# Smoke: rebuild -> headless Xvfb -> engine main menu -> screenshot + log checks.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-BINDIR="$ROOT/build-gles/debug/bin"
+# shellcheck source=tools/gles/headless_x11.sh
+source "$ROOT/tools/gles/headless_x11.sh"
+
+if [[ "${REONE_HEADLESS:-0}" != "1" ]]; then
+  headless_x11_start
+  trap headless_x11_stop EXIT
+fi
+
+BUILD_DIR="$ROOT/build-gles"
+BINDIR="$BUILD_DIR/debug/bin"
 OUTDIR="$ROOT/tools/gles/evidence"
 GAME="${GAME:-/run/media/brunner56/MyBook/SteamLibrary/steamapps/common/swkotor}"
+PBR="${PBR:-1}"
 mkdir -p "$OUTDIR"
 
 if [[ ! -f "$GAME/chitin.key" ]]; then
@@ -13,9 +23,9 @@ if [[ ! -f "$GAME/chitin.key" ]]; then
   exit 1
 fi
 
-if [[ -z "${DISPLAY:-}" ]]; then
-  echo "DISPLAY is unset; cannot run GUI smoke" >&2
-  exit 1
+echo "Building engine, launcher, shaderpack..."
+if [[ "${REONE_SKIP_BUILD:-0}" != "1" ]]; then
+  cmake --build "$BUILD_DIR" --target engine launcher shaderpack -j"$(nproc)"
 fi
 
 cat >"$BINDIR/reone.cfg" <<EOF
@@ -27,7 +37,7 @@ winscale=100
 fullscreen=0
 vsync=0
 grass=0
-pbr=1
+pbr=$PBR
 ssao=0
 ssr=0
 fxaa=0
@@ -59,7 +69,6 @@ fi
 
 pkill -f "$BINDIR/engine" 2>/dev/null || true
 pkill -f "$BINDIR/launcher" 2>/dev/null || true
-pkill -x engine 2>/dev/null || true
 sleep 1
 
 find_engine_pid() {
@@ -74,78 +83,93 @@ find_engine_pid() {
   return 1
 }
 
-GDK_BACKEND=x11 SDL_VIDEODRIVER=x11 ./launcher >/dev/null 2>&1 &
-LAUNCHER_PID=$!
+engine_alive() {
+  local pid="$1"
+  [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null
+}
+
+find_engine_window() {
+  local pid="$1"
+  local wid=""
+  wid=$(xdotool search --pid "$pid" 2>/dev/null | head -1 || true)
+  if [[ -n "$wid" ]]; then
+    echo "$wid"
+    return 0
+  fi
+  wid=$(xdotool search --class engine 2>/dev/null | head -1 || true)
+  if [[ -n "$wid" ]]; then
+    echo "$wid"
+    return 0
+  fi
+  for wid in $(xdotool search --class SDL_app 2>/dev/null); do
+    echo "$wid"
+    return 0
+  done
+  return 1
+}
+
+echo "Launching engine directly (dev main menu)..."
+GDK_BACKEND=x11 SDL_VIDEODRIVER=x11 ./engine &
+ENGINE_PID=$!
+sleep 1
 cleanup() {
-  kill "$LAUNCHER_PID" 2>/dev/null || true
+  kill "$ENGINE_PID" 2>/dev/null || true
   pkill -f "$BINDIR/engine" 2>/dev/null || true
 }
 trap cleanup EXIT
 
-echo "Waiting for launcher window..."
-LAUNCH_WIN=""
-for _ in $(seq 1 30); do
-  LAUNCH_WIN=$(xdotool search --name "^reone$" 2>/dev/null | head -1 || true)
-  [[ -n "$LAUNCH_WIN" ]] && break
-  sleep 1
-done
-if [[ -z "$LAUNCH_WIN" ]]; then
-  echo "Launcher window not found" >&2
-  exit 1
+if ! engine_alive "$ENGINE_PID"; then
+  ENGINE_PID=""
+  for _ in $(seq 1 30); do
+    ENGINE_PID=$(find_engine_pid || true)
+    [[ -n "$ENGINE_PID" ]] && break
+    sleep 1
+  done
 fi
-
-xdotool windowactivate --sync "$LAUNCH_WIN"
-sleep 1
-eval "$(xdotool getwindowgeometry --shell "$LAUNCH_WIN")"
-LAUNCH_CLICK_X=$((WIDTH / 2))
-LAUNCH_CLICK_Y=$((HEIGHT - 75))
-xdotool mousemove --window "$LAUNCH_WIN" "$LAUNCH_CLICK_X" "$LAUNCH_CLICK_Y" click 1
-echo "Clicked Launch at ${LAUNCH_CLICK_X},${LAUNCH_CLICK_Y}"
-
-ENGINE_PID=""
-for _ in $(seq 1 120); do
-  ENGINE_PID=$(find_engine_pid || true)
-  [[ -n "$ENGINE_PID" ]] && break
-  sleep 1
-done
 if [[ -z "$ENGINE_PID" ]]; then
   echo "Engine did not start" >&2
   exit 1
 fi
 echo "Engine pid $ENGINE_PID"
 
-sleep 10
-ENGINE_WIN=""
-for _ in $(seq 1 60); do
-  ENGINE_WIN=$(xdotool search --class engine 2>/dev/null | head -1 || true)
-  [[ -n "$ENGINE_WIN" ]] && break
-  for wid in $(xdotool search --class SDL_app 2>/dev/null); do
-    if [[ "$wid" != "$LAUNCH_WIN" ]]; then
-      ENGINE_WIN=$wid
-      break 2
-    fi
-  done
+echo "Waiting for main menu to settle..."
+for _ in $(seq 1 15); do
+  if ! engine_alive "$ENGINE_PID"; then
+    echo "Engine exited before main menu was ready" >&2
+    tail -50 engine.log 2>/dev/null || true
+    exit 1
+  fi
   sleep 1
 done
-if [[ -z "$ENGINE_WIN" ]]; then
-  ENGINE_WIN=$(xdotool search --pid "$ENGINE_PID" 2>/dev/null | head -1 || true)
-fi
+
+ENGINE_WIN=""
+for _ in $(seq 1 60); do
+  if ! engine_alive "$ENGINE_PID"; then
+    echo "Engine exited while searching for window" >&2
+    tail -50 engine.log 2>/dev/null || true
+    exit 1
+  fi
+  ENGINE_WIN=$(find_engine_window "$ENGINE_PID" || true)
+  [[ -n "$ENGINE_WIN" ]] && break
+  sleep 1
+done
 if [[ -z "$ENGINE_WIN" ]]; then
   echo "Engine window not found" >&2
   exit 1
 fi
 echo "Engine window $ENGINE_WIN"
 
-xdotool windowactivate --sync "$ENGINE_WIN"
+headless_x11_activate_window "$ENGINE_WIN"
 sleep 2
 
 # Keep pointer over the 3D view (away from WARP / menu buttons).
 xdotool mousemove --window "$ENGINE_WIN" 420 260
 sleep 1
 
-TAG="fallback"
-if grep -q "Cube map array supported: yes" engine.log 2>/dev/null; then
-  TAG="oes-fastpath"
+if ! engine_alive "$ENGINE_PID"; then
+  echo "Engine exited before screenshot" >&2
+  tail -50 engine.log 2>/dev/null || true
+  exit 1
 fi
 
 if grep -q "Loading module" engine.log 2>/dev/null; then
@@ -154,8 +178,13 @@ if grep -q "Loading module" engine.log 2>/dev/null; then
   exit 1
 fi
 
+TAG="fallback"
+if grep -q "Cube map array supported: yes" engine.log 2>/dev/null; then
+  TAG="oes-fastpath"
+fi
+
 SHOT="$OUTDIR/gles-menu-${TAG}-$(date +%Y%m%d-%H%M%S).png"
 import -window "$ENGINE_WIN" "$SHOT"
 echo "Screenshot: $SHOT"
 grep "Cube map array supported" engine.log || true
-grep -c "Texture not found" engine.log || true
+echo "Texture not found count: $(grep -c "Texture not found" engine.log || true)"

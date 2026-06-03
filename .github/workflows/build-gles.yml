@@ -31,7 +31,8 @@ jobs:
             build-essential cmake ninja-build pkg-config \
             libboost-all-dev libsdl3-dev libopenal-dev libmad0-dev \
             libavcodec-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev \
-            libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev
+            libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev \
+            xvfb x11-utils xdotool imagemagick
 
       - name: Configure
         run: |

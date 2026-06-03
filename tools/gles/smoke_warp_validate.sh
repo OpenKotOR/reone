@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
-# Smoke: launcher -> engine -> warp button -> module -> screenshot (Mesa GLES IBL check).
+# Smoke: headless Xvfb -> engine -> warp -> module -> screenshot (Mesa GLES IBL check).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-BINDIR="$ROOT/build-gles/debug/bin"
+# shellcheck source=tools/gles/headless_x11.sh
+source "$ROOT/tools/gles/headless_x11.sh"
+
+if [[ "${REONE_HEADLESS:-0}" != "1" ]]; then
+  headless_x11_start
+  trap headless_x11_stop EXIT
+fi
+
+BUILD_DIR="$ROOT/build-gles"
+BINDIR="$BUILD_DIR/debug/bin"
 OUTDIR="$ROOT/tools/gles/evidence"
 GAME="${GAME:-/run/media/brunner56/MyBook/SteamLibrary/steamapps/common/swkotor}"
 MODULE="${MODULE:-danm14aa}"
@@ -14,9 +23,9 @@ if [[ ! -f "$GAME/chitin.key" ]]; then
   exit 1
 fi
 
-if [[ -z "${DISPLAY:-}" ]]; then
-  echo "DISPLAY is unset; cannot run GUI smoke" >&2
-  exit 1
+echo "Building engine, launcher, shaderpack..."
+if [[ "${REONE_SKIP_BUILD:-0}" != "1" ]]; then
+  cmake --build "$BUILD_DIR" --target engine launcher shaderpack -j"$(nproc)"
 fi
 
 cat >"$BINDIR/reone.cfg" <<EOF
@@ -60,7 +69,6 @@ fi
 
 pkill -f "$BINDIR/engine" 2>/dev/null || true
 pkill -f "$BINDIR/launcher" 2>/dev/null || true
-pkill -x engine 2>/dev/null || true
 sleep 1
 
 find_engine_pid() {
@@ -75,7 +83,7 @@ find_engine_pid() {
   return 1
 }
 
-GDK_BACKEND=x11 ./launcher >/dev/null 2>&1 &
+GDK_BACKEND=x11 SDL_VIDEODRIVER=x11 ./launcher >/dev/null 2>&1 &
 LAUNCHER_PID=$!
 cleanup() {
   kill "$LAUNCHER_PID" 2>/dev/null || true
@@ -95,7 +103,7 @@ if [[ -z "$LAUNCH_WIN" ]]; then
   exit 1
 fi
 
-xdotool windowactivate --sync "$LAUNCH_WIN"
+headless_x11_activate_window "$LAUNCH_WIN"
 sleep 1
 eval "$(xdotool getwindowgeometry --shell "$LAUNCH_WIN")"
 LAUNCH_CLICK_X=$((WIDTH / 2))
@@ -132,7 +140,7 @@ if [[ -z "$ENGINE_WIN" ]]; then
 fi
 echo "Engine window $ENGINE_WIN ($(xdotool getwindowname "$ENGINE_WIN" 2>/dev/null || echo SDL))"
 
-xdotool windowactivate --sync "$ENGINE_WIN"
+headless_x11_activate_window "$ENGINE_WIN"
 sleep 2
 
 # Developer warp button on K1 main menu (1024x768).

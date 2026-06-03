@@ -280,6 +280,12 @@ void MeshSceneNode::render(IRenderPass &pass) {
     material.color = glm::vec4(1.0f, 1.0f, 1.0f, _alpha);
     material.ambientColor = mesh->ambient;
     material.diffuseColor = mesh->diffuse;
+    if (glm::length(material.ambientColor) < 1e-4f) {
+        material.ambientColor = glm::vec3(1.0f);
+    }
+    if (glm::length(material.diffuseColor) < 1e-4f) {
+        material.diffuseColor = glm::vec3(1.0f);
+    }
     material.selfIllumColor = _selfIllumColor;
     material.staticObject = _static;
     if (_sceneGraph.hasShadowLight() && isReceivingShadows(_model, *this)) {
