@@ -185,6 +185,12 @@ if grep -q "Loading module" engine.log 2>/dev/null; then
   exit 1
 fi
 
+if grep -q "Failed to load audio clip 'mus_theme" engine.log 2>/dev/null; then
+  echo "ERROR: main menu theme audio failed to load" >&2
+  grep "Failed to load audio clip 'mus_theme" engine.log || true
+  exit 1
+fi
+
 TAG="fallback"
 if grep -q "Cube map array supported: yes" engine.log 2>/dev/null; then
   TAG="oes-fastpath"
