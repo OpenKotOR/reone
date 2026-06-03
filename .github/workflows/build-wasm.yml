@@ -35,18 +35,21 @@ concurrency:
 
 jobs:
   wasm-ci:
-    # Self-hosted runner (reone-wasm-*) when GitHub-hosted pool is stuck; native Fedora + emsdk.
-    runs-on: [self-hosted, linux, x64, wasm-ci]
+    # GitHub-hosted: self-hosted wasm-ci runner had stale git credentials (checkout auth fail).
+    runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Install build deps (Fedora host)
+      - name: Install build deps
         run: |
           set -euo pipefail
-          sudo dnf install -y ninja-build ccache boost-devel curl git python3 cmake gcc gcc-c++
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ninja-build ccache libboost-dev curl git python3 cmake g++ \
+            iproute2
 
       - name: Module smoke (serve.py handler + Range)
         working-directory: tools/web
