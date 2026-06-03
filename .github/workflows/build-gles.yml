@@ -1,0 +1,53 @@
+# Native OpenGL ES 3.0 build (glad-gles branch).
+name: Build GLES engine
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master, glad-gles, "cursor/**"]
+  pull_request:
+    branches: [main, master, glad-gles]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gles-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gles-linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build pkg-config ccache \
+            libboost-program-options-dev libboost-exception-dev libboost-json-dev \
+            libopenal-dev libsdl3-dev libmad0-dev \
+            libavcodec-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev \
+            libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev
+
+      - name: Configure
+        run: |
+          cmake -S . -B build-gles -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_LAUNCHER=OFF \
+            -DBUILD_TOOLKIT=OFF \
+            -DBUILD_DATAMINER=OFF \
+            -DBUILD_GFF2JSON=OFF \
+            -DBUILD_UNERF=OFF
+
+      - name: Build engine
+        run: cmake --build build-gles --target engine shaderpack -j"$(nproc)"
+
+      - name: Pack shaders
+        run: build-gles/bin/shaderpack glsl build-gles/bin
+
+      - name: Verify binary
+        run: test -x build-gles/bin/engine && test -f build-gles/bin/shaderpack.erf
