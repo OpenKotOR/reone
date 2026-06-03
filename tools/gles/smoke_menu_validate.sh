@@ -171,7 +171,7 @@ sleep 2
 
 # Keep pointer over the 3D view (away from WARP / menu buttons).
 xdotool mousemove --window "$ENGINE_WIN" 420 260
-sleep 1
+sleep 3
 
 if ! engine_alive "$ENGINE_PID"; then
   echo "Engine exited before screenshot" >&2
@@ -201,3 +201,11 @@ import -window "$ENGINE_WIN" "$SHOT"
 echo "Screenshot: $SHOT"
 grep "Cube map array supported" engine.log || true
 echo "Texture not found count: $(grep -c "Texture not found" engine.log || true)"
+
+MALAK_MEAN=$(convert "$SHOT" -crop 240x360+140+120 +repage -format "%[mean]" info: 2>/dev/null || echo 0)
+MALAK_MEAN_INT=${MALAK_MEAN%%.*}
+echo "Malak region mean: $MALAK_MEAN"
+if [[ "${MALAK_MEAN_INT:-0}" -lt 850 ]]; then
+  echo "ERROR: main menu 3D view too dark (mean=$MALAK_MEAN, need >= 850)" >&2
+  exit 1
+fi

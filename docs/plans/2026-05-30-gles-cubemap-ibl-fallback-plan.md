@@ -68,6 +68,8 @@ Geometry shaders remain replaced by multi-pass shadow rendering (`uShadowLayer` 
 - **Merged `master`** into `glad-gles` (`b6381396`); post-merge GLES shader + audio null-guard fixes
 - `soundSearchOrder()` includes `StreamMusic` (+ Voice) so main-menu theme (`mus_theme_cult.wav`) resolves again after Installation port
 - Menu smoke asserts no `Failed to load audio clip 'mus_theme…'` in `engine.log`
+- GUI preview lighting: activate all MDL lights, skip area lightmaps/env/bump, full world ambient
+- Menu smoke luminance gate on Malak 3D crop (mean ≥850)
 - PR opened: https://github.com/modawan/reone/pull/163
 
 ### Partial / uncertain
@@ -75,11 +77,10 @@ Geometry shaders remain replaced by multi-pass shadow rendering (`uShadowLayer` 
 - In-module IBL screenshot captured (`gles-fallback-danm14aa-*.png`) but not auto-scored for skybox/reflection quality
 - OES 16-layer fast path not validated on hardware with the extension
 - modawan fork PR workflows still `action_required` (approval only; OpenKotOR push CI is green)
-- Real-GPU menu smoke on `DISPLAY=:0` passes log/screenshot gates, but Malak body remains a near-black silhouette (3D view region mean ≈568/65535); UI/cursor/logo OK
+- Real-GPU and headless menu smoke pass luminance gate (Malak region mean ≥850); further polish possible
 - WebGL/WASM combine-shader compile not exercised
 
 ### Recommended next steps
 
 1. Merge [modawan/reone#163](https://github.com/modawan/reone/pull/163) (OpenKotOR CI green; fork checks optional)
-2. Follow-up slice: main-menu Malak retro lighting (GUI ortho scene still too dark on real GPU)
-3. WASM vertical slice when `build-web/` profile is ready
+2. WASM vertical slice when `build-web/` profile is ready

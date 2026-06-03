@@ -70,6 +70,15 @@ static const std::vector<float> g_shadowCascadeDivisors {
     0.045f,
     0.135f};
 
+static bool hasGuiModelRoot(const std::list<std::shared_ptr<ModelSceneNode>> &roots) {
+    for (auto &root : roots) {
+        if (root->usage() == ModelUsage::GUI) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void SceneGraph::clear() {
     _modelRoots.clear();
     _walkmeshRoots.clear();
@@ -192,6 +201,21 @@ void SceneGraph::cullRoots() {
 }
 
 void SceneGraph::updateLighting() {
+    if (hasGuiModelRoot(_modelRoots)) {
+        for (auto &light : _activeLights) {
+            light->setActive(false);
+        }
+        _activeLights.clear();
+        for (auto *light : _lights) {
+            if (_activeLights.size() >= kMaxLights) {
+                break;
+            }
+            light->setActive(true);
+            _activeLights.push_back(light);
+        }
+        return;
+    }
+
     // Find closest lights and create a lookup
     auto closestLights = computeClosestLights(kMaxLights, [](auto &light, float distance2) {
         float radius = light.radius() + kLightRadiusBias;
@@ -482,6 +506,9 @@ Texture &SceneGraph::render(const glm::ivec2 &dim) {
             globals.viewInv = camera->viewInv();
             globals.cameraPosition = glm::vec4(camera->position(), 1.0f);
             globals.worldAmbientColor = glm::vec4(ambientLightColor(), 1.0f);
+            if (hasGuiModelRoot(_modelRoots)) {
+                globals.worldAmbientColor = glm::vec4(1.0f);
+            }
             globals.clipNear = camera->zNear();
             globals.clipFar = camera->zFar();
             globals.numLights = static_cast<int>(_activeLights.size());
@@ -973,6 +1000,9 @@ std::shared_ptr<DummySceneNode> SceneGraph::newDummy(ModelNode &modelNode) {
 
 std::shared_ptr<ModelSceneNode> SceneGraph::newModel(Model &model, ModelUsage usage) {
     auto node = newSceneNode<ModelSceneNode, Model &, ModelUsage>(model, usage);
+    if (usage == ModelUsage::GUI) {
+        node->setCullingEnabled(false);
+    }
     node->init();
     return std::move(node);
 }
