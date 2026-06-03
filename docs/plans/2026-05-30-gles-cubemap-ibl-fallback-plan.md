@@ -75,7 +75,7 @@ Geometry shaders remain replaced by multi-pass shadow rendering (`uShadowLayer` 
 
 ### Recommended next steps
 
-1. Confirm `Build GLES engine` CI is green on PR #163
-2. Run `./tools/gles/smoke_menu_validate.sh` after CI passes (already validated locally)
-3. Optional: `./tools/gles/smoke_warp_validate.sh` for in-module IBL spot-check
+1. User confirm main menu screenshot (`tools/gles/evidence/menu-pbr-fixed-*.png`) at 1024×768
+2. Confirm `Build GLES engine` CI is green on PR #163
+3. After menu sign-off: `./tools/gles/smoke_warp_validate.sh` for in-module IBL spot-check
 4. WASM vertical slice when `build-web/` profile is ready
