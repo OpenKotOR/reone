@@ -97,6 +97,10 @@ public:
     virtual void withPolygonMode(PolygonMode mode, const std::function<void()> &block) = 0;
     virtual void withFaceCullMode(FaceCullMode mode, const std::function<void()> &block) = 0;
     virtual void withBlendMode(BlendMode mode, const std::function<void()> &block) = 0;
+
+    virtual bool cubeMapArraySupported() const {
+        return false;
+    }
 };
 
 class Context : public IContext, boost::noncopyable {
@@ -176,10 +180,15 @@ public:
     void withFaceCullMode(FaceCullMode mode, const std::function<void()> &block) override;
     void withBlendMode(BlendMode mode, const std::function<void()> &block) override;
 
+    bool cubeMapArraySupported() const override {
+        return _cubeMapArraySupported;
+    }
+
 private:
     GraphicsOptions &_options;
 
     bool _inited {false};
+    bool _cubeMapArraySupported {false};
 
     std::optional<std::reference_wrapper<ShaderProgram>> _program;
     std::optional<std::reference_wrapper<Framebuffer>> _readFramebuffer;

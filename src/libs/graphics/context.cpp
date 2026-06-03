@@ -54,13 +54,20 @@ void Context::init() {
         std::string vendorStr = vendor ? (const char *)vendor : "Unknown";
 
         throw std::runtime_error(str(boost::format(
-                                         "gladLoadGLLoader failed to initialize OpenGL context.\n"
+                                         "gladLoadGLES2 failed to initialize OpenGL ES context.\n"
                                          "  GL_VERSION: %s\n"
                                          "  GL_RENDERER: %s\n"
                                          "  GL_VENDOR: %s\n"
-                                         "  Ensure your graphics driver supports OpenGL 4.0 Core Profile.") %
+                                         "  Ensure your graphics driver supports OpenGL ES 3.0.") %
                                      versionStr % rendererStr % vendorStr));
     }
+
+#ifdef GLAD_GL_OES_texture_cube_map_array
+    _cubeMapArraySupported = GLAD_GL_OES_texture_cube_map_array != 0;
+#else
+    _cubeMapArraySupported = false;
+#endif
+    _options.cubeMapArraySupported = _cubeMapArraySupported;
 
     int maxBuffers;
     glGetIntegerv(GL_MAX_DRAW_BUFFERS, &maxBuffers);
@@ -145,8 +152,8 @@ void Context::bindDrawFramebuffer(Framebuffer &buffer, std::vector<int> colorInd
         }
         glDrawBuffers(attachments.size(), &attachments[0]);
     } else {
-        // FIXME: glDrawBuffer is not supported
-        // glDrawBuffer(GL_NONE);
+        GLenum none = GL_NONE;
+        glDrawBuffers(1, &none);
     }
 }
 

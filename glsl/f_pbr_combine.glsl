@@ -20,8 +20,13 @@ uniform sampler2D sGBufDepth;
 uniform sampler2D sBRDFLUT;
 uniform sampler2DArray sShadowMap;
 uniform samplerCube sShadowMapCube;
+#ifdef REONE_CUBE_MAP_ARRAY
+#extension GL_OES_texture_cube_map_array : require
 uniform samplerCubeArray sIrradianceMapArray;
 uniform samplerCubeArray sPrefilteredEnvMapArray;
+#else
+#include "i_envmap_cubemap_pool.glsl"
+#endif
 #ifdef R_SSAO
 uniform sampler2D sSSAO;
 #endif
@@ -29,7 +34,11 @@ uniform sampler2D sSSAO;
 uniform sampler2D sSSR;
 #endif
 
+#ifdef REONE_GLES
+in vec2 fragUV1;
+#else
 noperspective in vec2 fragUV1;
+#endif
 
 layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec4 fragHilights;
@@ -66,8 +75,13 @@ void main() {
     float ao = 1.0;
 #endif
     int envMapDerivedLayer = int(round(selfIllumSample.a * 255.0));
-    vec3 irradianceSample = texture(sIrradianceMapArray, vec4(R, envMapDerivedLayer)).rgb;
-    vec3 prefilteredEnvMapSample = textureLod(sPrefilteredEnvMapArray, vec4(R, envMapDerivedLayer), roughness * MAX_REFLECTION_LOD).rgb;
+#ifdef REONE_CUBE_MAP_ARRAY
+    vec3 irradianceSample = texture(sIrradianceMapArray, vec4(R, float(envMapDerivedLayer))).rgb;
+    vec3 prefilteredEnvMapSample = textureLod(sPrefilteredEnvMapArray, vec4(R, float(envMapDerivedLayer)), roughness * MAX_REFLECTION_LOD).rgb;
+#else
+    vec3 irradianceSample = sampleEnvMapIrradianceCubemap(R, envMapDerivedLayer);
+    vec3 prefilteredEnvMapSample = sampleEnvMapPrefilterCubemap(R, envMapDerivedLayer, roughness * MAX_REFLECTION_LOD);
+#endif
 #ifdef R_SSR
     vec3 environment = mix(
         gammaToLinear(prefilteredEnvMapSample),

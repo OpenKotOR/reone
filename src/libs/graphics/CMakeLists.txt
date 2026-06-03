@@ -111,7 +111,7 @@ set(GRAPHICS_SOURCES
 add_library(graphics STATIC ${GRAPHICS_HEADERS} ${GRAPHICS_SOURCES} ${CLANG_FORMAT_PATH})
 set_target_properties(graphics PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}$<$<CONFIG:Debug>:/debug>/lib)
 set_target_properties(graphics PROPERTIES DEBUG_POSTFIX "d")
-set_source_files_properties(${CMAKE_SOURCE_DIR}/extern/glad/src/gl.c PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/extern/glad/src/gles2.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 target_precompile_headers(graphics PRIVATE ${CMAKE_SOURCE_DIR}/src/pch.h)
 target_include_directories(graphics PRIVATE ${GLAD_INCLUDE_DIR})
 target_link_libraries(graphics PRIVATE ${OPENGL_LIBRARIES} ${CMAKE_DL_LIBS})

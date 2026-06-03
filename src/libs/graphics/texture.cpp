@@ -332,17 +332,15 @@ void Texture::refreshCubeMapArray() {
     // TODO: fill with pixel data
     int numLayers = static_cast<int>(_layers.size());
 
-    // FIXME: cube map arrays are not supported
-    // glTexImage3D(
-    //     GL_TEXTURE_CUBE_MAP_ARRAY,
-    //     0,
-    //     getInternalPixelFormatGL(_pixelFormat),
-    //     _width, _height, numLayers,
-    //     0,
-    //     getPixelFormatGL(_pixelFormat),
-    //     getPixelTypeGL(_pixelFormat),
-    //     nullptr)
-        ;
+    glTexImage3D(
+        GL_TEXTURE_CUBE_MAP_ARRAY_OES,
+        0,
+        getInternalPixelFormatGL(_pixelFormat),
+        _width, _height, numLayers,
+        0,
+        getPixelFormatGL(_pixelFormat),
+        getPixelTypeGL(_pixelFormat),
+        nullptr);
 }
 
 void Texture::clear(int w, int h, PixelFormat format, int numLayers, bool refresh) {
@@ -378,9 +376,7 @@ void Texture::setPixels(int w, int h, PixelFormat format, std::vector<Layer> lay
 
 uint32_t Texture::getTargetGL() const {
     if (isCubeMapArray()) {
-        // FIXME: cube map arrays are not supported
-        assert(false);
-        // return GL_TEXTURE_CUBE_MAP_ARRAY;
+        return GL_TEXTURE_CUBE_MAP_ARRAY_OES;
     } else if (isCubeMap()) {
         return GL_TEXTURE_CUBE_MAP;
     } else if (is2DArray()) {

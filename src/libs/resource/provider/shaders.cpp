@@ -215,17 +215,36 @@ std::shared_ptr<Shader> Shaders::initShader(ShaderType type, std::string resRef)
 
     // Prepend preprocessor directives
     auto defines = StringBuilder();
+    defines.append("#define REONE_GLES\n");
+    defines.append("#define noperspective\n");
+    if (_graphicsOpt.cubeMapArraySupported) {
+        defines.append("#define REONE_CUBE_MAP_ARRAY\n");
+    } else {
+        defines.append("#define REONE_ENVMAP_CUBEMAP_LAYERS 4\n");
+    }
     if (_graphicsOpt.ssr) {
         defines.append("#define R_SSR\n");
     }
     if (_graphicsOpt.ssao) {
         defines.append("#define R_SSAO\n");
     }
-    if (!defines.empty()) {
-        defines.append("\n");
-        sources.push_front(defines.string());
+    defines.append("\n");
+    sources.push_front(defines.string());
+
+    StringBuilder header;
+    header.append("#version 300 es\n");
+    header.append("precision highp float;\n");
+    header.append("precision highp int;\n");
+    if (type == ShaderType::Fragment) {
+        header.append("precision highp sampler2D;\n");
+        header.append("precision highp sampler2DArray;\n");
+        header.append("precision highp samplerCube;\n");
+        if (_graphicsOpt.cubeMapArraySupported) {
+            header.append("precision highp samplerCubeArray;\n");
+        }
     }
-    sources.push_front("#version 400 core\n\n");
+    header.append("\n");
+    sources.push_front(header.string());
 
     auto shader = std::make_unique<Shader>(type, std::move(sources));
     shader->init();
@@ -256,8 +275,19 @@ std::shared_ptr<ShaderProgram> Shaders::initShaderProgram(std::vector<std::share
     program->setUniform("sBumpMapArray", TextureUnits::bumpMapArray);
     program->setUniform("sShadowMap", TextureUnits::shadowMapArray);
     program->setUniform("sBRDFLUT", TextureUnits::brdfLUT);
-    program->setUniform("sIrradianceMapArray", TextureUnits::irradianceMapArray);
-    program->setUniform("sPrefilteredEnvMapArray", TextureUnits::prefilteredEnvMapArray);
+    if (_graphicsOpt.cubeMapArraySupported) {
+        program->setUniform("sIrradianceMapArray", TextureUnits::irradianceMapArray);
+        program->setUniform("sPrefilteredEnvMapArray", TextureUnits::prefilteredEnvMapArray);
+    } else {
+        program->setUniform("sIrradianceCubemap0", TextureUnits::irradianceCubemap0);
+        program->setUniform("sIrradianceCubemap1", TextureUnits::irradianceCubemap1);
+        program->setUniform("sIrradianceCubemap2", TextureUnits::irradianceCubemap2);
+        program->setUniform("sIrradianceCubemap3", TextureUnits::irradianceCubemap3);
+        program->setUniform("sPrefilteredCubemap0", TextureUnits::prefilteredCubemap0);
+        program->setUniform("sPrefilteredCubemap1", TextureUnits::prefilteredCubemap1);
+        program->setUniform("sPrefilteredCubemap2", TextureUnits::prefilteredCubemap2);
+        program->setUniform("sPrefilteredCubemap3", TextureUnits::prefilteredCubemap3);
+    }
 
     // Uniform Blocks
     program->bindUniformBlock("Globals", UniformBlockBindingPoints::globals);
