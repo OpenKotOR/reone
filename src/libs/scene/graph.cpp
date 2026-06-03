@@ -445,16 +445,34 @@ void SceneGraph::prepareTransparentLeafs() {
     }
 }
 
+static RendererType chooseRendererType(const graphics::GraphicsOptions &options, const CameraSceneNode *cameraNode) {
+    if (!options.pbr) {
+        return RendererType::Retro;
+    }
+    if (!cameraNode || !cameraNode->camera()) {
+        return RendererType::Retro;
+    }
+    // PBR deferred combine relies on perspective depth reconstruction; GUI orthographic
+    // scenes (main menu, chargen previews) use the retro forward path instead.
+    if (cameraNode->camera()->type() == CameraType::Orthographic) {
+        return RendererType::Retro;
+    }
+    return RendererType::PBR;
+}
+
 Texture &SceneGraph::render(const glm::ivec2 &dim) {
-    if (!_renderPipeline) {
-        auto rendererType = _graphicsOpt.pbr ? RendererType::PBR : RendererType::Retro;
+    auto cameraNode = this->camera();
+    const CameraSceneNode *cameraPtr = cameraNode ? &cameraNode->get() : nullptr;
+    auto rendererType = chooseRendererType(_graphicsOpt, cameraPtr);
+    if (!_renderPipeline || _renderPipelineType != rendererType || _renderPipelineSize != dim) {
         _renderPipeline = _renderPipelineFactory.create(rendererType, dim);
         _renderPipeline->init();
+        _renderPipelineType = rendererType;
+        _renderPipelineSize = dim;
     }
     auto &pipeline = *_renderPipeline;
     pipeline.reset();
 
-    auto cameraNode = this->camera();
     if (cameraNode) {
         auto camera = cameraNode->get().camera();
         _graphicsSvc.uniforms.setGlobals([this, &camera](auto &globals) {
@@ -485,6 +503,11 @@ Texture &SceneGraph::render(const glm::ivec2 &dim) {
                 globals.shadowCascadeFarPlanes = _shadowCascadeFarPlanes;
                 globals.shadowStrength = shadowStrength();
                 globals.shadowRadius = shadowRadius();
+            } else {
+                globals.shadowLightPosition = glm::vec4(0.0f);
+                globals.shadowCascadeFarPlanes = glm::vec4(0.0f);
+                globals.shadowStrength = 0.0f;
+                globals.shadowRadius = 0.0f;
             }
             if (isFogEnabled()) {
                 globals.fogNear = fogNear();

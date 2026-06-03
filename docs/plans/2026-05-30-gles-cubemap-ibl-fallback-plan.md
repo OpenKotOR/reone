@@ -62,6 +62,7 @@ Geometry shaders remain replaced by multi-pass shadow rendering (`uShadowLayer` 
 - Shadow geometry-shader workaround (`uShadowLayer` multi-pass)
 - Native GLES build verified (`build-gles/` → `engine` links)
 - Main menu + cursor rendering fixed on Mesa (BGR/BGRA upload + GLSL compile fixes)
+- Main menu 3D view with `pbr=1`: orthographic GUI scenes use retro forward renderer (PBR deferred combine fails on ortho depth path)
 - PR opened: https://github.com/modawan/reone/pull/163
 - GLES CI workflow added (`.github/workflows/build-gles.yml`)
 
