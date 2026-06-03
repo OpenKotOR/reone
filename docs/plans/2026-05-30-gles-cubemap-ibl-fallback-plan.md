@@ -52,3 +52,25 @@ Geometry shaders remain replaced by multi-pass shadow rendering (`uShadowLayer` 
 - WebGPU renderer backend
 - Expanding fallback beyond 4 layers without multi-pass combine or bindless textures
 - Rebasing unrelated branch commits
+
+## Status (2026-06-03)
+
+### Landed
+
+- Option A cubemap pool (separate `GL_TEXTURE_CUBE_MAP` pairs, 4-layer fallback cap)
+- OES cube map array fast path retained when `GLAD_GL_OES_texture_cube_map_array` loads
+- Shadow geometry-shader workaround (`uShadowLayer` multi-pass)
+- Native GLES build verified (`build-gles/` → `engine` links)
+- PR opened: https://github.com/modawan/reone/pull/163
+
+### Partial / uncertain
+
+- In-game visual check (skybox/reflections non-black on Mesa GLES without OES) not run in this environment
+- OES 16-layer fast path not validated on hardware with the extension
+- WebGL/WASM combine-shader compile not exercised
+
+### Recommended next steps
+
+1. Run `build-gles/debug/bin/engine` against a local KOTOR install; confirm IBL on fallback path
+2. Add CI workflow for `REONE_GRAPHICS_GLES=ON` build (modawan has no checks on `glad-gles` today)
+3. WASM vertical slice when `build-web/` profile is ready
