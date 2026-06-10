@@ -12,17 +12,26 @@ Original prompt: ReOne WASM playability and openkotor-site integration — `game
   Uses `tools/web/.venv` (Playwright). GemRB demo data is **not** a valid KotOR install (KEY/BIF mismatch).
 - Lazy web I/O: `WebFileInputStream` defers HTTP stat until first read (Asyncify-safe).
 - **CI parity script:** `tools/web/ci_build_wasm.sh` (same steps as `.github/workflows/build-wasm.yml`).
-- **CI (2026-05-28):** **Green** on self-hosted runner `reone-wasm-BodenPC` — [run 26556694840](https://github.com/OpenKotOR/reone/actions/runs/26556694840) @ `76beb564`. Hosted `ubuntu-latest` may still queue forever (`runner_id: 0`); see `doc/ci-actions-unblock.md`. Runner persistence: `tools/web/install-wasm-runner-service.sh`.
+- **CI (2026-06-03):** `wasm-ci` runs on **`ubuntu-latest`** (GitHub-hosted). Self-hosted `reone-wasm-BodenPC` was retired after checkout auth failures; see PR #7 wasm-ci fixes. **`cancel-in-progress: false`** — wasm links take ~30–90 min; do not abort mid-compile on PR churn.
 - **Tracking:** [OpenKotOR/reone#3](https://github.com/OpenKotOR/reone/issues/3) closed with resolution link to first green run [26556275588](https://github.com/OpenKotOR/reone/actions/runs/26556275588).
-- **Concurrency (2026-05-28):** Use `cancel-in-progress: true` per ref so only the latest push queues one `wasm-ci` job. Avoid `cancel-in-progress: false` (later runs stay `pending` behind a stuck `queued` run) and avoid removing concurrency entirely (parallel queued runs exhaust the org pool).
+- **`master` push (2026-06-03):** `build-wasm.yml` now triggers on **`master`** (not only `cursor/**`) so post-GLES merges keep wasm-ci green.
 - **serve.py (fixed):** CI integration smoke uses `--directory /tmp/web-empty --game-root …`; serve now allows **game-mirror-only** mode when `engine.html` is absent but `--game-root` is set.
 
-## PR status (2026-05-27)
+## PR status (2026-06-04)
 
-- WASM branch merged with `upstream/master` (2026-05-28); pushed to **`origin/master`** (no PR workflow).
-- [modawan/reone#111](https://github.com/modawan/reone/pull/111) remains open on modawan fork (draft); OpenKotOR ships via direct master push.
-- A prior local-only `git merge upstream/master` was **reverted**; branch tip is again `origin/cursor/web-wasm-gles-and-fs-access`.
-- CI for fork PRs runs on **OpenKotOR/reone** when the head branch is pushed; `modawan/reone` may show “no checks” for cross-repo PRs until workflows are approved on the fork.
+- **[OpenKotOR/reone#4](https://github.com/OpenKotOR/reone/pull/4)** merged — WASM menu, module warp, `extract::Installation` port (`68d7f3ad`).
+- **[OpenKotOR/reone#5](https://github.com/OpenKotOR/reone/pull/5)** merged — dataminer → `Installation` (`e8e4b678`).
+- **[OpenKotOR/reone#7](https://github.com/OpenKotOR/reone/pull/7)** merged — OpenGL ES 3.0 engine + GLES CI smokes (`20e32664`).
+- **[OpenKotOR/reone#10](https://github.com/OpenKotOR/reone/pull/10)** merged — wasm-ci on `master` pushes.
+- **[OpenKotOR/reone#11](https://github.com/OpenKotOR/reone/pull/11)** merged — save-game peek via `ErfReader`; legacy containers removed.
+- **[OpenKotOR/reone#14](https://github.com/OpenKotOR/reone/pull/14)** merged — DialogGUI talk position guard (`fdd9bf84`).
+- **[OpenKotOR/reone#15](https://github.com/OpenKotOR/reone/pull/15)** merged — GLES black model/texture fix on real GPU (`d9aff290`); smokes use `build-gles/bin`, not stale `debug/bin`.
+- **[OpenKotOR/reone#18](https://github.com/OpenKotOR/reone/pull/18)** merged — modawan fork integration (`23a518fe`).
+- **[OpenKotOR/reone#22](https://github.com/OpenKotOR/reone/pull/22)** merged — modawan #167 handoff @ `e33f322a` (`4c669589`).
+- **`master`** @ `4c669589`; Linux/Windows/wasm-ci/gles-linux green.
+- **Downstream:** [modawan/reone#167](https://github.com/modawan/reone/pull/167) supersedes closed #163 — `OpenKotOR:glad-gles` @ `e33f322a`, **MERGEABLE**; maintainer squash-merge required.
+- [modawan/reone#163](https://github.com/modawan/reone/pull/163) — closed without merge (2026-06-05); use #167.
+- [modawan/reone#166](https://github.com/modawan/reone/pull/166) — closed; integrate via #167.
 
 ## Done (implementation)
 

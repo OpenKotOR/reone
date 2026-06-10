@@ -603,8 +603,25 @@ void Game::loadGame(std::string_view name) {
     if (!globalVars) {
         throw ResourceNotFoundException("globalvars.res not found");
     }
+    deserializeGlobalVariables(*globalVars);
 
-    GVT gvt = resource::parseGVT(*globalVars);
+    std::shared_ptr<Gff> saveInfo(_services.resource.gffs.get("savenfo", ResType::Res));
+    if (!saveInfo) {
+        throw ResourceNotFoundException("saveinfo.res not found");
+    }
+
+    NFO nfo = resource::parseNFO(*saveInfo);
+    loadModule(nfo.lastModule, /*entry=*/"", /*fromSave=*/true);
+
+    // Inventory is serialized into a separate file. Once the player is loaded,
+    // deserialize it into the player's inventory.
+    if (auto inventoryGff = _services.resource.gffs.get("inventory", ResType::Res)) {
+        deserializeInventory(*inventoryGff);
+    }
+}
+
+void Game::deserializeGlobalVariables(resource::Gff &gvtGff) {
+    GVT gvt = resource::parseGVT(gvtGff);
     _globalStrings.clear();
     _globalBooleans.clear();
     _globalNumbers.clear();
@@ -627,14 +644,19 @@ void Game::loadGame(std::string_view name) {
         float facing = glm::half_pi<float>() - glm::atan(rot.x, rot.y);
         setGlobalLocation(name, std::make_shared<Location>(pos, facing));
     }
+}
 
-    std::shared_ptr<Gff> saveInfo(_services.resource.gffs.get("savenfo", ResType::Res));
-    if (!saveInfo) {
-        throw ResourceNotFoundException("saveinfo.res not found");
+void Game::deserializeInventory(resource::Gff &inventoryGff) {
+    std::shared_ptr<Creature> player = _party.player();
+    if (!player) {
+        return;
     }
 
-    NFO nfo = resource::parseNFO(*saveInfo);
-    loadModule(nfo.lastModule, /*entry=*/"", /*fromSave=*/true);
+    for (const auto &itemGff : inventoryGff.getList("ItemList")) {
+        std::shared_ptr<Item> item = newItem();
+        item->deserialize(*itemGff);
+        player->addItem(item);
+    }
 }
 
 bool Game::loadParty() {
@@ -1107,6 +1129,9 @@ void Game::updateMusic() {
         return;
     }
     auto clip = _services.resource.audioClips.get(_musicResRef);
+    if (!clip) {
+        return;
+    }
     _music = _services.audio.mixer.play(std::move(clip), AudioType::Music);
 }
 
@@ -1328,6 +1353,9 @@ void Game::openInGameMenu(InGameMenuTab tab) {
         break;
     case InGameMenuTab::Abilities:
         _inGame->openAbilities();
+        break;
+    case InGameMenuTab::Party:
+        _inGame->openPartySelection();
         break;
     case InGameMenuTab::Messages:
         _inGame->openMessages();
@@ -1968,7 +1996,7 @@ void Game::consoleStartConversation(const ConsoleArgs &args) {
     auto leader = getConsoleLeader();
     auto target = getConsoleTargetObject();
 
-    auto action = newAction<StartConversationAction>(target, target->conversation());
+    auto action = newAction<StartConversationAction>(target, "");
     leader->addAction(std::move(action));
 }
 
@@ -2073,7 +2101,7 @@ void Game::consoleCastSpellAtObject(const ConsoleArgs &args) {
     std::optional<std::shared_ptr<Item>> item;
     if (spellItem) {
         for (const std::shared_ptr<Item> &inventoryItem : leader->items()) {
-            if (inventoryItem->blueprintResRef() == spellItem.value()) {
+            if (inventoryItem->tag() == spellItem.value()) {
                 item = inventoryItem;
                 break;
             }

@@ -99,7 +99,7 @@ public:
     virtual void withBlendMode(BlendMode mode, const std::function<void()> &block) = 0;
 
     virtual bool cubeMapArraySupported() const {
-        return true;
+        return false;
     }
 };
 
@@ -188,7 +188,8 @@ private:
     GraphicsOptions &_options;
 
     bool _inited {false};
-    bool _cubeMapArraySupported {true};
+    bool _cubeMapArraySupported {false};
+    int _maxDrawBuffers {1};
 
     std::optional<std::reference_wrapper<ShaderProgram>> _program;
     std::optional<std::reference_wrapper<Framebuffer>> _readFramebuffer;

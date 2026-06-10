@@ -18,13 +18,6 @@ set(RESOURCE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/libs/resource)
 
 set(RESOURCE_HEADERS
     ${RESOURCE_INCLUDE_DIR}/2da.h
-    ${RESOURCE_INCLUDE_DIR}/container.h
-    ${RESOURCE_INCLUDE_DIR}/container/erf.h
-    ${RESOURCE_INCLUDE_DIR}/container/exe.h
-    ${RESOURCE_INCLUDE_DIR}/container/folder.h
-    ${RESOURCE_INCLUDE_DIR}/container/keybif.h
-    ${RESOURCE_INCLUDE_DIR}/container/memory.h
-    ${RESOURCE_INCLUDE_DIR}/container/rim.h
     ${RESOURCE_INCLUDE_DIR}/di/module.h
     ${RESOURCE_INCLUDE_DIR}/di/services.h
     ${RESOURCE_INCLUDE_DIR}/dialog.h
@@ -66,9 +59,6 @@ set(RESOURCE_HEADERS
     ${RESOURCE_INCLUDE_DIR}/parser/gff/ifo.h
     ${RESOURCE_INCLUDE_DIR}/parser/gff/nfo.h
     ${RESOURCE_INCLUDE_DIR}/parser/gff/pth.h
-    ${RESOURCE_INCLUDE_DIR}/parser/gff/ute.h
-    ${RESOURCE_INCLUDE_DIR}/parser/gff/utm.h
-    ${RESOURCE_INCLUDE_DIR}/parser/gff/uts.h
     ${RESOURCE_INCLUDE_DIR}/path.h
     ${RESOURCE_INCLUDE_DIR}/provider/2das.h
     ${RESOURCE_INCLUDE_DIR}/provider/audioclips.h
@@ -105,11 +95,6 @@ set(RESOURCE_HEADERS
 
 set(RESOURCE_SOURCES
     ${RESOURCE_SOURCE_DIR}/2da.cpp
-    ${RESOURCE_SOURCE_DIR}/container/erf.cpp
-    ${RESOURCE_SOURCE_DIR}/container/exe.cpp
-    ${RESOURCE_SOURCE_DIR}/container/folder.cpp
-    ${RESOURCE_SOURCE_DIR}/container/keybif.cpp
-    ${RESOURCE_SOURCE_DIR}/container/rim.cpp
     ${RESOURCE_SOURCE_DIR}/di/module.cpp
     ${RESOURCE_SOURCE_DIR}/director.cpp
     ${RESOURCE_SOURCE_DIR}/extract/capsule.cpp
@@ -150,9 +135,6 @@ set(RESOURCE_SOURCES
     ${RESOURCE_SOURCE_DIR}/parser/gff/ifo.cpp
     ${RESOURCE_SOURCE_DIR}/parser/gff/nfo.cpp
     ${RESOURCE_SOURCE_DIR}/parser/gff/pth.cpp
-    ${RESOURCE_SOURCE_DIR}/parser/gff/ute.cpp
-    ${RESOURCE_SOURCE_DIR}/parser/gff/utm.cpp
-    ${RESOURCE_SOURCE_DIR}/parser/gff/uts.cpp
     ${RESOURCE_SOURCE_DIR}/provider/2das.cpp
     ${RESOURCE_SOURCE_DIR}/provider/audioclips.cpp
     ${RESOURCE_SOURCE_DIR}/provider/cursors.cpp
