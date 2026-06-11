@@ -17,11 +17,18 @@ Original prompt: ReOne WASM playability and openkotor-site integration — `game
 - **`master` push (2026-06-03):** `build-wasm.yml` now triggers on **`master`** (not only `cursor/**`) so post-GLES merges keep wasm-ci green.
 - **serve.py (fixed):** CI integration smoke uses `--directory /tmp/web-empty --game-root …`; serve now allows **game-mirror-only** mode when `engine.html` is absent but `--game-root` is set.
 
+## PR status (2026-06-11 — LFG pass 22 — PR #25 merged)
+
+- **[OpenKotOR/reone#25](https://github.com/OpenKotOR/reone/pull/25) merged** to `master` as `4c308558` (pass 21 handoff refresh).
+- **modawan [#167](https://github.com/modawan/reone/pull/167)** still **OPEN/MERGEABLE** @ `00956ec4` — squash-merge requires modawan maintainer.
+- **No other open OpenKotOR PRs.** Agent-executable arc work complete; downstream gate unchanged.
+- **Do not** re-run doc-only glad-gles ↔ master sync loops without #167 merge or code changes.
+
 ## PR status (2026-06-10 — LFG pass 21 — maintainer gate re-verified)
 
 - **`master` CI green** @ `dab7c08e`: Linux/Windows `build`, `gles-linux`, `wasm-ci` ([runs](https://github.com/OpenKotOR/reone/actions/runs/27295428822)).
-- **modawan [#167](https://github.com/modawan/reone/pull/167)** still **OPEN/MERGEABLE** @ `00956ec4` — squash-merge requires modawan maintainer.
-- **No open OpenKotOR PRs.** No agent-executable work until #167 merges.
+- **modawan [#167](https://github.com/modawan/reone/pull/167)** still **OPEN/MERGEABLE** @ `00956ec4`.
+- **[OpenKotOR/reone#25](https://github.com/OpenKotOR/reone/pull/25)** opened (pass 21 docs); merged pass 22 @ `4c308558`.
 - **Do not** re-run doc-only glad-gles ↔ master sync loops without a code change or #167 merge.
 
 ## PR status (2026-06-10 — LFG pass 20 — arc complete)
