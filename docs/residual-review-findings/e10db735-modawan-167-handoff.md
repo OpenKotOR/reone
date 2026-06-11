@@ -1,8 +1,8 @@
 # Residual handoff — modawan/reone#167
 
-**Recorded:** 2026-06-05 (updated 2026-06-11 — LFG pass 23)  
+**Recorded:** 2026-06-05 (updated 2026-06-11 — LFG pass 24)  
 **OpenKotOR `glad-gles`:** `00956ec4`  
-**OpenKotOR `master`:** `b7aebb17`
+**OpenKotOR `master`:** `27ddb6a8`
 
 ## Blocker
 
@@ -16,7 +16,7 @@ Agent account `th3w1zard1` has **READ** on `modawan/reone` and cannot execute `M
 | Head | `OpenKotOR:glad-gles` @ `00956ec4` |
 | Base | modawan `master` @ `48b2ea3e` |
 | GitHub | **MERGEABLE** (conflicts pre-resolved; `runOnLoadScript` + web traces in `game.cpp`) |
-| CI | OpenKotOR `master` green @ `b7aebb17` (post #26 merge); modawan #167 has no required checks |
+| CI | OpenKotOR `master` green @ `27ddb6a8` (post #27 merge); modawan #167 has no required checks |
 
 ## Maintainer merge steps
 
